@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
 
-st.layout("wide")
+st.set_page_config(page_title="TekhLeads", layout="wide")
 
-st.title("Leads")
+st.title("Leads Dashboard")
 st.write("Please select your desired options:")
 
 @st.cache_data
@@ -90,5 +90,6 @@ st.download_button(
     file_name="Your list.csv",
     mime="text/csv"
 )
+
 
 
