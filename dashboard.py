@@ -21,7 +21,7 @@ def load_data():
 
 df = load_data()
 
-col1, col2, col3 = st.columns(2)
+col1, col2= st.columns(2)
 with col1:
     sector = st.selectbox("Sector", ["Real Estate", "Tech", "Other"])
 with col2:
@@ -84,3 +84,4 @@ st.download_button(
 
 st.write(df.head())
 st.write(df.columns)
+
