@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 
+st.layout("wide")
+
 st.title("Leads")
 st.write("Please select your desired options:")
 
@@ -85,7 +87,8 @@ csv_data = filtered.to_csv(index=False).encode("utf-8")
 st.download_button(
     label="Download Lead List",
     data=csv_data,
-    file_name="lead_list.csv",
+    file_name="Your list.csv",
     mime="text/csv"
 )
+
 
