@@ -60,14 +60,9 @@ def build_ml_features(df_raw):
     df = pd.concat([df, prof_dummies, sector_dummies], axis=1)
 
     drop_cols = [
-        "Name", "Sector", "Profession", "Company/Network", "Company Size",
-        "Company Website", "Personal Website", "Has a LinkedIn?",
-        "LinkedIn Profile", "Other Social Media",
-        "Member of Private Investor Group?",
-        "Interacted with Relevant Content?",
-        "Option to request service/book appointment?",
-        "Engagement Level", "Email", "Phone Number",
-        "Total", "Classification", "Notes"
+        "Name", "Sector", "Profession", "Company/Network", "Company Size","Company Website", "Personal Website", "Has a LinkedIn?",
+        "LinkedIn Profile", "Other Social Media", "Member of Private Investor Group?", "Interacted with Relevant Content?",
+        "Option to request service/book appointment?", "Engagement Level", "Email", "Phone Number","Total", "Classification", "Notes"
     ]
 
     return df.drop(columns=[c for c in drop_cols if c in df.columns])
@@ -96,29 +91,42 @@ with col2:
     profession = st.selectbox("Profession", ["All"] + sorted(df["Profession"].dropna().unique().tolist()))
 
 has_linkedin = st.checkbox("Has LinkedIn")
-has_interacted = st.checkbox("Interacted with Relevant Content")
+interacted = st.checkbox("Has interacted with relevant content previously")
 private_group = st.checkbox("Member of Private Investor Group?")
-green_only = st.checkbox("Green List Only")
+
+comp_size = st.selectbox("Company Size", ["All", "2-10", "11-50", "51-200", "201-500"])
+
+col3, col4 = st.columns(2)
+with col3:
+    green_list = st.checkbox("Green list")
+with col4:
+    all_list = st.checkbox("All")
 
 filtered = df.copy()
 
-if sector != "All":
-    filtered = filtered[filtered["Sector"] == sector]
+if not all_list:
 
-if profession != "All":
-    filtered = filtered[filtered["Profession"] == profession]
+    if sector != "All":
+        filtered = filtered[filtered["Sector"] == sector]
 
-if has_linkedin:
-    filtered = filtered[filtered["Has a LinkedIn?"].str.lower() == "yes"]
+    if profession != "All":
+        filtered = filtered[filtered["Profession"] == profession]
 
-if has_interacted:
-    filtered = filtered[filtered["Interacted with Relevant Content?"].str.lower() == "yes"]
+    if comp_size != "All":
+        filtered = filtered[filtered["Company Size"] == comp_size]
 
-if private_group:
-    filtered = filtered[filtered["Member of Private Investor Group?"].str.lower() == "yes"]
+    if has_linkedin:
+        filtered = filtered[filtered["Has a LinkedIn?"].astype(str).str.lower() == "yes"]
 
-if green_only:
-    filtered = filtered[filtered["Classification"] == "GREEN"]
+    if interacted:
+        filtered = filtered[filtered["Interacted with Relevant Content?"].astype(str).str.lower() == "yes"]
+
+    if private_group:
+        filtered = filtered[filtered["Member of Private Investor Group?"].astype(str).str.lower() == "yes"]
+
+    if green_list:
+        filtered = filtered[filtered["Classification"] == "GREEN"]
+
 
 st.subheader("Your Filtered Leads")
 st.dataframe(filtered, use_container_width=True)
