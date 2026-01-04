@@ -37,7 +37,7 @@ has_linkedin = st.checkbox("Has LinkedIn")
 interacted = st.checkbox("Has interacted with relevant content previously")
 private_group = st.checkbox("Member of Private Investor Group?")
 
-comp_size = st.selectbox("Company Size", ["All", "2-10", "11-50", "50-200"])
+comp_size = st.selectbox("Company Size", ["All", "2-10", "11-50", "51-200", "201-500"])
 
 col3, col4 = st.columns(2)
 with col3:
@@ -88,3 +88,4 @@ st.download_button(
     file_name="lead_list.csv",
     mime="text/csv"
 )
+
