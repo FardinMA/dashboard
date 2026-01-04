@@ -31,13 +31,8 @@ has_linkedin = st.checkbox("Has LinkedIn")
 interacted = st.checkbox("Has interacted with relevant content previously")
 has_contact = st.checkbox("Has personal email or phone number")
 
-col3 = st.columns(1)
-with col3:
-    private_group = st.checkbox("Member of Private Group?")
-
-col4 = st.columns(1)
-with col4:
-    comp_size = st.selectbox("If yes, select Company Size", ["2-10", "11-50", "50-200"])
+private_group = st.checkbox("Member of Private Group?")
+comp_size = st.selectbox("If yes, select Company Size", ["2-10", "11-50", "50-200"])
 
 col5, col6 = st.columns(2)
 with col5:
@@ -84,4 +79,5 @@ st.download_button(
 
 st.write(df.head())
 st.write(df.columns)
+
 
