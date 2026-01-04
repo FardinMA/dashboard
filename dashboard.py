@@ -2,6 +2,10 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
+import io
+from openpyxl.styles import PatternFill
+from openpyxl.formatting.rule import FormulaRule
+
 
 st.set_page_config(page_title="TekhLeads", layout="wide")
 st.title("Leads Dashboard")
@@ -136,10 +140,68 @@ st.dataframe(filtered, use_container_width=True)
 
 csv_out = filtered.to_csv(index=False).encode("utf-8")
 
+if "Notes" in filtered.columns:
+    filtered = filtered.assign(
+        _has_notes=filtered["Notes"].notna() & (filtered["Notes"].astype(str).str.strip() != "")
+    ).sort_values(
+        by="_has_notes",
+        ascending=False
+    ).drop(columns="_has_notes")
+
+def dataframe_to_excel_bytes(df: pd.DataFrame) -> bytes:
+    output = io.BytesIO()
+
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Leads")
+
+        workbook = writer.book
+        worksheet = writer.sheets["Leads"]
+
+        # Find the Classification column letter
+        classification_col_idx = df.columns.get_loc("Classification") + 1
+        classification_col_letter = chr(64 + classification_col_idx)
+
+        # Excel row range (skip header)
+        start_row = 2
+        end_row = len(df) + 1
+        end_col_letter = chr(64 + len(df.columns))
+
+        # GREEN rows
+        green_fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
+        green_rule = FormulaRule(
+            formula=[f"${classification_col_letter}{start_row}=\"GREEN\""],
+            fill=green_fill
+        )
+
+        # RED rows
+        red_fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
+        red_rule = FormulaRule(
+            formula=[f"${classification_col_letter}{start_row}=\"RED\""],
+            fill=red_fill
+        )
+
+        worksheet.conditional_formatting.add(
+            f"A{start_row}:{end_col_letter}{end_row}",
+            green_rule
+        )
+        worksheet.conditional_formatting.add(
+            f"A{start_row}:{end_col_letter}{end_row}",
+            red_rule
+        )
+
+        # Freeze header row
+        worksheet.freeze_panes = "A2"
+
+        # Enable filters
+        worksheet.auto_filter.ref = f"A1:{end_col_letter}{end_row}"
+
+    return output.getvalue()
+
+excel_bytes = dataframe_to_excel_bytes(filtered)
+
 st.download_button(
     label="Download Lead List",
-    data=csv_out,
-    file_name="Your Lead List.csv",
-    mime="text/csv"
+    data=excel_bytes,
+    file_name="Your Lead List.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
-
