@@ -90,16 +90,19 @@ with col1:
 with col2:
     profession = st.selectbox("Profession", ["All"] + sorted(df["Profession"].dropna().unique().tolist()))
 
-has_linkedin = st.checkbox("Has LinkedIn")
-interacted = st.checkbox("Has interacted with relevant content previously")
-private_group = st.checkbox("Member of Private Investor Group?")
-
-comp_size = st.selectbox("Company Size", ["All", "2-10", "11-50", "51-200", "201-500"])
-
 col3, col4 = st.columns(2)
 with col3:
+    has_linkedin = st.checkbox("Has LinkedIn")
+with col4:    
+    interacted = st.checkbox("Has interacted with relevant content previously")
+
+private_group = st.checkbox("Member of Company/Network/Private Investor Group?")
+comp_size = st.selectbox("If yes, please specify a size:", ["All", "2-10", "11-50", "51-200", "201-500"])
+
+col5, col6 = st.columns(2)
+with col5:
     green_list = st.checkbox("Green list")
-with col4:
+with col6:
     all_list = st.checkbox("All")
 
 filtered = df.copy()
@@ -139,3 +142,4 @@ st.download_button(
     file_name="Your Lead List.csv",
     mime="text/csv"
 )
+
