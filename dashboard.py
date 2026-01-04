@@ -80,9 +80,24 @@ if all_list:
     filtered = df.copy()
 
 st.subheader("Filtered Leads")
-st.dataframe(filtered, use_container_width=True)
+display_columns = {
+    "sector": "Sector",
+    "profession": "Profession",
+    "has_linkedin": "Has LinkedIn",
+    "has_interacted": "Interacted with Relevant Content",
+    "private_group": "Member of Private Investor Group",
+    "company_size": "Company Size",
+    "company_network": "Company / Network",
+    "company_website": "Company Website",
+    "personal_website": "Personal Website",
+    "email": "Email",
+    "phone": "Phone Number",
+    "classification": "Classification"
+}
 
-csv_data = filtered.to_csv(index=False).encode("utf-8")
+display_df = filtered.rename(columns=display_columns)
+st.dataframe(display_df, use_container_width=True)
+csv_data = display_df.to_csv(index=False).encode("utf-8")
 
 st.download_button(
     label="Download Lead List",
@@ -90,6 +105,7 @@ st.download_button(
     file_name="Your list.csv",
     mime="text/csv"
 )
+
 
 
 
