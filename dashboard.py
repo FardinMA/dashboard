@@ -10,8 +10,8 @@ from openpyxl.formatting.rule import FormulaRule
 st.set_page_config(page_title="TekhLeads", layout="wide")
 st.title("Leads Dashboard")
 st.info(
-    "Green leads (higher than 5) are higher priority."
-    "Red leads are lower priority."
+    "Green leads are higher priority than red leads.\n\n"
+    "Please note that a green classification does not guarantee a successful deal, and a red classification does not mean a lead should be discarded entirely."
 )
 
 st.write("Please select your desired options:")
