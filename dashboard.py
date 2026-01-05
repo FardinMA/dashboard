@@ -89,7 +89,7 @@ if needs_scoring.any():
     df.loc[needs_scoring, score_cols] = np.round(preds).astype(int)
 
 
-df["Total"] = df[score_cols].mean(axis=1).round(2)
+df["Total"] = df[score_cols].mean(axis=1).round(0).astype(int)
 df["Classification"] = df["Total"].apply(lambda x: "GREEN" if x > 5 else "RED")
 
 col1, col2 = st.columns(2)
