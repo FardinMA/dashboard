@@ -9,6 +9,11 @@ from openpyxl.formatting.rule import FormulaRule
 
 st.set_page_config(page_title="TekhLeads", layout="wide")
 st.title("Leads Dashboard")
+st.info(
+    "Green leads (higher than 5) are higher priority."
+    "Red leads are lower priority."
+)
+
 st.write("Please select your desired options:")
 
 @st.cache_data
