@@ -25,51 +25,87 @@ def load_model():
 df = load_data()
 model = load_model()
 
-def build_ml_features(df_raw):
+def raw2feature(df_raw):
     df = df_raw.copy()
 
-    binary_fields = {
-        "Member of Private Investor Group?": "is_private_investor_group_member",
-        "Has a LinkedIn?": "has_linkedin",
-        "Interacted with Relevant Content?": "has_interacted_content",
-        "Option to request service/book appointment?": "has_booking_option"
-    }
+    df["is_private_investor_group_member"] = 0
+    df["has_linkedin"] = 0
+    df["has_interacted_content"] = 0
+    df["has_booking_option"] = 0
 
-    for src, dst in binary_fields.items():
-        df[dst] = (
-            df[src].astype(str).str.lower()
-            .map({"yes": 1, "no": 0})
-            .fillna(0)
-            .astype(int)
-        )
+    for index in df.index:
 
-    df["has_other_social_media"] = df["Other Social Media"].apply(
-        lambda x: 1 if pd.notnull(x) and str(x).strip() else 0
+        if str(df.loc[index, "Member of Private Investor Group?"]).lower() == "yes":
+            df.loc[index, "is_private_investor_group_member"] = 1
+
+        if str(df.loc[index, "Has a LinkedIn?"]).lower() == "yes":
+            df.loc[index, "has_linkedin"] = 1
+
+        if str(df.loc[index, "Interacted with Relevant Content?"]).lower() == "yes":
+            df.loc[index, "has_interacted_content"] = 1
+
+        if str(df.loc[index, "Option to request service/book appointment?"]).lower() == "yes":
+            df.loc[index, "has_booking_option"] = 1
+
+    df["has_email"] = 0
+    df["has_phone"] = 0
+    df["has_company_website"] = 0
+    df["has_personal_website"] = 0
+    df["has_other_social_media"] = 0
+
+    for index in df.index:
+
+        if pd.notna(df.loc[index, "Email"]) and str(df.loc[index, "Email"]).strip() != "":
+            df.loc[index, "has_email"] = 1
+
+        if pd.notna(df.loc[index, "Phone Number"]) and str(df.loc[index, "Phone Number"]).strip() != "":
+            df.loc[index, "has_phone"] = 1
+
+        if pd.notna(df.loc[index, "Company Website"]) and str(df.loc[index, "Company Website"]).strip() != "":
+            df.loc[index, "has_company_website"] = 1
+
+        if pd.notna(df.loc[index, "Personal Website"]) and str(df.loc[index, "Personal Website"]).strip() != "":
+            df.loc[index, "has_personal_website"] = 1
+
+        if pd.notna(df.loc[index, "Other Social Media"]) and str(df.loc[index, "Other Social Media"]).strip() != "":
+            df.loc[index, "has_other_social_media"] = 1
+
+    df["engagement_level_numeric"] = 1
+
+    for index in df.index:
+        level = str(df.loc[index, "Engagement Level"]).lower()
+
+        if level == "medium":
+            df.loc[index, "engagement_level_numeric"] = 2
+        elif level == "high":
+            df.loc[index, "engagement_level_numeric"] = 3
+
+    profession_dummies = pd.get_dummies(
+        df["Profession"],
+        prefix="profession"
     )
-    df["has_email"] = df["Email"].apply(lambda x: 1 if pd.notnull(x) and str(x).strip() else 0)
-    df["has_phone"] = df["Phone Number"].apply(lambda x: 1 if pd.notnull(x) and str(x).strip() else 0)
-    df["has_company_website"] = df["Company Website"].apply(lambda x: 1 if pd.notnull(x) and str(x).strip() else 0)
-    df["has_personal_website"] = df["Personal Website"].apply(lambda x: 1 if pd.notnull(x) and str(x).strip() else 0)
 
-    df["engagement_level_numeric"] = (
-        df["Engagement Level"].astype(str).str.lower()
-        .map({"low": 1, "medium": 2, "high": 3})
-        .fillna(1)
-        .astype(int)
+    sector_dummies = pd.get_dummies(
+        df["Sector"],
+        prefix="sector"
     )
 
-    prof_dummies = pd.get_dummies(df["Profession"], prefix="profession", dtype=int)
-    sector_dummies = pd.get_dummies(df["Sector"], prefix="sector", dtype=int)
+    df = pd.concat(
+        [df, profession_dummies, sector_dummies],
+        axis=1
+    )
 
-    df = pd.concat([df, prof_dummies, sector_dummies], axis=1)
-
-    drop_cols = [
-        "Name", "Sector", "Profession", "Company/Network", "Company Size","Company Website", "Personal Website", "Has a LinkedIn?",
-        "LinkedIn Profile", "Other Social Media", "Member of Private Investor Group?", "Interacted with Relevant Content?",
-        "Option to request service/book appointment?", "Engagement Level", "Email", "Phone Number","Total", "Classification", "Notes"
+    drop_cols = ["Name","Sector", "Profession","Company/Network","Company Size","Company Website",
+        "Personal Website","Has a LinkedIn?","LinkedIn Profile","Other Social Media","Member of Private Investor Group?",
+        "Interacted with Relevant Content?","Option to request service/book appointment?","Engagement Level",
+        "Email","Phone Number","Notes","Total","Classification"
     ]
 
-    return df.drop(columns=[c for c in drop_cols if c in df.columns])
+    for col in drop_cols:
+        if col in df.columns:
+            df = df.drop(columns=col)
+
+    return df
 
 score_cols = [
     "Investor Relevance Score",
@@ -80,17 +116,16 @@ score_cols = [
 needs_scoring = df[score_cols].isna().any(axis=1)
 
 if needs_scoring.any():
-    features = build_ml_features(df.loc[needs_scoring])
+    features = raw2feature(df.loc[needs_scoring])
     expected_features = model.estimators_[0].get_booster().feature_names
     features = features.reindex(columns=expected_features, fill_value=0)
-
     preds = model.predict(features)
-
     df.loc[needs_scoring, score_cols] = np.round(preds).astype(int)
 
 
 df["Total"] = df[score_cols].mean(axis=1).round(0).astype(int)
-df["Classification"] = df["Total"].apply(lambda x: "GREEN" if x > 5 else "RED")
+df["Classification"] = "RED"
+df.loc[df["Total"] > 5, "Classification"] = "GREEN"
 
 col1, col2 = st.columns(2)
 with col1:
@@ -161,23 +196,19 @@ def dataframe_to_excel_bytes(df: pd.DataFrame) -> bytes:
         workbook = writer.book
         worksheet = writer.sheets["Leads"]
 
-        # Find the Classification column letter
         classification_col_idx = df.columns.get_loc("Classification") + 1
         classification_col_letter = chr(64 + classification_col_idx)
 
-        # Excel row range (skip header)
         start_row = 2
         end_row = len(df) + 1
         end_col_letter = chr(64 + len(df.columns))
 
-        # GREEN rows
         green_fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
         green_rule = FormulaRule(
             formula=[f"${classification_col_letter}{start_row}=\"GREEN\""],
             fill=green_fill
         )
 
-        # RED rows
         red_fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
         red_rule = FormulaRule(
             formula=[f"${classification_col_letter}{start_row}=\"RED\""],
@@ -193,10 +224,8 @@ def dataframe_to_excel_bytes(df: pd.DataFrame) -> bytes:
             red_rule
         )
 
-        # Freeze header row
         worksheet.freeze_panes = "A2"
 
-        # Enable filters
         worksheet.auto_filter.ref = f"A1:{end_col_letter}{end_row}"
 
     return output.getvalue()
